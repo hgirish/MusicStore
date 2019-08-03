@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using MusicStore.Controllers;
 using MusicStore.Models;
@@ -15,8 +16,10 @@ namespace MusicStore.Test
     public class HomeControllerTest
     {
         private  IServiceProvider _serviceProvider;
+        private TestAppSettings _appSettings;
         public HomeControllerTest()
         {
+            _appSettings = new TestAppSettings();
             var efServiceProvider = new ServiceCollection()
                 .AddEntityFrameworkInMemoryDatabase()
                 .BuildServiceProvider();
@@ -36,10 +39,11 @@ namespace MusicStore.Test
 
 
             var dbContext = _serviceProvider.GetRequiredService<MusicStoreContext>();
+            var cache = _serviceProvider.GetRequiredService<IMemoryCache>();
 
-            var controller = new HomeController();
+            var controller = new HomeController(_appSettings);
             PopulateData(dbContext);
-            var result = await controller.Index(dbContext);
+            var result = await controller.Index(dbContext, cache);
 
             var viewResult = Assert.IsType<ViewResult>(result);
 
@@ -65,7 +69,7 @@ namespace MusicStore.Test
         {
             // Arrange
             var httpContext = new DefaultHttpContext();
-            var controller = new HomeController();
+            var controller = new HomeController(_appSettings);
             controller.ControllerContext.HttpContext = httpContext;
 
 
@@ -85,7 +89,7 @@ namespace MusicStore.Test
         [Fact]
         public void StatusCodePage_ReturnsStatusCodePage()
         {
-            var controller = new HomeController();
+            var controller = new HomeController(_appSettings);
 
             var result = controller.StatusCodePage();
 
@@ -97,7 +101,7 @@ namespace MusicStore.Test
         [Fact]
         public void AccessDenied_ReturnsAccessDeniedView()
         {
-            var controller = new HomeController();
+            var controller = new HomeController(_appSettings);
 
             var result = controller.AccessDenied();
 

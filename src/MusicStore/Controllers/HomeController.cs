@@ -5,20 +5,42 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 using MusicStore.Models;
 
 namespace MusicStore.Controllers
 {
     public class HomeController : Controller
     {
-        public async Task<IActionResult> Index(
-            [FromServices]MusicStoreContext dbContext)
+        public readonly AppSettings _appSettings;
+        public HomeController(IOptions<AppSettings> options)
         {
+            _appSettings = options.Value;
+        }
+        public async Task<IActionResult> Index(
+            [FromServices]MusicStoreContext dbContext,
+            [FromServices] IMemoryCache cache)
+        {
+            var cacheKey = "topselling";
+
             List<Album> albums;
-            albums = await GetTopSellingAlbumsAsync(dbContext, 6);
-            if (albums != null && albums.Count > 0)
+            if (!cache.TryGetValue(cacheKey, out albums))
             {
-                // Cache albums
+                albums = await GetTopSellingAlbumsAsync(dbContext, 6);
+                if (albums != null && albums.Count > 0)
+                {
+                    // Cache albums
+                    if (_appSettings.CacheDbResults)
+                    {
+                        cache.Set(
+                            cacheKey,
+                            albums,
+                            new MemoryCacheEntryOptions()
+                            .SetAbsoluteExpiration(TimeSpan.FromMinutes(10))
+                            .SetPriority(CacheItemPriority.High));
+                    }
+                } 
             }
             return View(albums);
         }
