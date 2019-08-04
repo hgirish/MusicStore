@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -20,10 +21,13 @@ namespace MusicStore.Test
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ShoppingCartController _controller;
-        
+        readonly MusicStoreContext _dbContext;
+        readonly string _cartId;
+
 
         public ShoppingCartControllerTest()
         {
+            _cartId = "CartId_A";
             var efServiceProvider = new ServiceCollection()
                 .AddEntityFrameworkInMemoryDatabase()
                 .BuildServiceProvider();
@@ -39,10 +43,12 @@ namespace MusicStore.Test
 
             _serviceProvider = services.BuildServiceProvider();
 
-            var dbContext = _serviceProvider.GetRequiredService<MusicStoreContext>();
-            var httpContext = new DefaultHttpContext();
-            httpContext.Session = new TestSession();
-            _controller = new ShoppingCartController(dbContext);
+            _dbContext = _serviceProvider.GetRequiredService<MusicStoreContext>();
+            var httpContext = new DefaultHttpContext
+            {
+                Session = new TestSession()
+            };
+            _controller = new ShoppingCartController(_dbContext);
             _controller.ControllerContext.HttpContext = httpContext;
 
 
@@ -69,7 +75,7 @@ namespace MusicStore.Test
         public async Task Index_ReturnsNoCartItems_WhenNoItemsInCart()
         {
             //var controller = new ShoppingCartController(null);
-            _controller.HttpContext.Session.SetString(AppConstants.SessionCartId, "CartId_A");
+            _controller.HttpContext.Session.SetString(AppConstants.SessionCartId, _cartId);
             var result = await _controller.Index();
 
             var viewResult = Assert.IsType<ViewResult>(result);
@@ -84,10 +90,10 @@ namespace MusicStore.Test
         [Fact]
         public async Task Index_ReturnsCartItems_WhenItemsInCart()
         {
-            var cartId = "CartId_A";
-            AddTestCartItems(cartId);
+            
+            AddTestCartItems(_cartId);
 
-            _controller.HttpContext.Session.SetString(AppConstants.SessionCartId, cartId);
+            _controller.HttpContext.Session.SetString(AppConstants.SessionCartId, _cartId);
 
             var result = await _controller.Index();
 
@@ -102,15 +108,49 @@ namespace MusicStore.Test
 
         }
 
+        [Fact]
+        public async Task AddToCart_AddsItemToCartAsync()
+        {
+            var albumId = 3;
+            AddTestAblums();
+          
+            _controller.HttpContext.Session.SetString(AppConstants.SessionCartId, _cartId);
+
+            var result = await _controller.AddToCart(albumId, CancellationToken.None);
+           // var dbContext = _serviceProvider.GetRequiredService<MusicStoreContext>();
+            var sessionCartId = _controller.HttpContext.Session.GetString(AppConstants.SessionCartId);
+            var cart = ShoppingCart.GetCart(_dbContext, sessionCartId);
+
+            List<CartItem> cartItems = await cart.GetCartItems();
+            Assert.Single(cartItems);
+            Assert.Equal(albumId, cartItems.Single().AlbumId);
+
+            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Null(redirectResult.ControllerName);
+            Assert.Equal("Index", redirectResult.ActionName);
+
+           
+
+
+        }
+
         private void AddTestCartItems(string cartId)
         {
-            var dbContext = _serviceProvider.GetRequiredService<MusicStoreContext>();
+           // var dbContext = _serviceProvider.GetRequiredService<MusicStoreContext>();
             var cartItems = CreateTestCartItems(cartId,
                 itemPrice: 10,
                 numberOfItems: 5);
-            dbContext.AddRange(cartItems.Select(n => n.Album).Distinct());
-            dbContext.AddRange(cartItems);
-            dbContext.SaveChanges();
+            _dbContext.AddRange(cartItems.Select(n => n.Album).Distinct());
+            _dbContext.AddRange(cartItems);
+            _dbContext.SaveChanges();
+        }
+
+        private void AddTestAblums()
+        {
+           // var dbContext = _serviceProvider.GetRequiredService<MusicStoreContext>();
+            var albums = CreateTestAlbums(itemPrice: 10);
+            _dbContext.AddRange(albums);
+            _dbContext.SaveChanges();
         }
 
         private static CartItem[] CreateTestCartItems(string cartId, decimal itemPrice, int numberOfItems)
