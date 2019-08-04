@@ -127,9 +127,34 @@ namespace MusicStore.Test
 
             var redirectResult = Assert.IsType<RedirectToActionResult>(result);
             Assert.Null(redirectResult.ControllerName);
-            Assert.Equal("Index", redirectResult.ActionName);
+            Assert.Equal("Index", redirectResult.ActionName);       
 
+
+        }
+
+        [Fact]
+        public async Task RemoveFromCart_RemovesItemFromCart()
+        {
+            var cartItemId = 3;
            
+            AddTestCartItems(_cartId);
+
+            _controller.HttpContext.Session.SetString(AppConstants.SessionCartId, _cartId);
+
+            var result = await _controller.RemoveFromCart(cartItemId, CancellationToken.None);
+
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var viewModel = Assert.IsType<ShoppingCartRemoveViewModel>(jsonResult.Value);
+            Assert.Equal(4, viewModel.CartCount);
+            Assert.Equal(4 * 10, viewModel.CartTotal);
+
+            Assert.Equal(" has been removed from your shopping cart", viewModel.Message);
+
+            var sessionCartId = _controller.HttpContext.Session.GetString(AppConstants.SessionCartId);
+            var cart = ShoppingCart.GetCart(_dbContext, sessionCartId);
+            Assert.DoesNotContain((await cart.GetCartItems()), c =>
+            c.CartItemId == cartItemId);
+
 
 
         }

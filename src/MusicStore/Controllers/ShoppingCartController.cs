@@ -45,5 +45,46 @@ namespace MusicStore.Controllers
 
             return RedirectToAction("Index");
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveFromCart(int id, CancellationToken requestAborted)
+        {
+            var cartId = HttpContext.Session.GetString(AppConstants.SessionCartId);
+            
+
+            var cart = ShoppingCart.GetCart(_dbContext, cartId);
+            var cartItem = await _dbContext.CartItems
+                .Where(item => item.CartItemId == id)
+                .Include(c => c.Album)
+                .SingleOrDefaultAsync();
+
+            string message;
+            int itemCount;
+            if (cartItem != null)
+            {
+                itemCount = cart.RemoveFromCart(id);
+                await _dbContext.SaveChangesAsync(requestAborted);
+                string removed = (itemCount > 0) ? "1 copy of " : string.Empty;
+                message = removed + cartItem.Album.Title + " has been removed from your shopping cart";
+            }
+            else
+            {
+                itemCount = 0;
+                message = "Could not find this item, nothing has been removed from your shopping cart";
+            }
+
+            var results = new ShoppingCartRemoveViewModel
+            {
+                Message = message,
+                CartCount = await cart.GetCount(),
+                CartTotal = await cart.GetTotal(),
+                ItemCount = itemCount,
+                DeleteId = id
+            };
+
+            return Json(results);
+
+        }
     }
 }
