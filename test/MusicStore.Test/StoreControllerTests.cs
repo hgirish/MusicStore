@@ -18,11 +18,12 @@ namespace MusicStore.Test
         private readonly IServiceProvider _serviceProvider;
         public StoreControllerTests()
         {
-            var efServiceProvider = new ServiceCollection()
+            var services = new ServiceCollection();
+            var efServiceProvider = services
                 .AddEntityFrameworkInMemoryDatabase()
                 .BuildServiceProvider();
 
-            var services = new ServiceCollection();
+           
 
             services.AddDbContext<MusicStoreContext>(b =>
             b.UseInMemoryDatabase("Scratch")
