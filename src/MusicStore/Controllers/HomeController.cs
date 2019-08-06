@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -52,7 +53,7 @@ namespace MusicStore.Controllers
                 .Take(count)
                 .ToListAsync());
         }
-
+        [AllowAnonymous]
         public IActionResult Privacy()
         {
             
