@@ -19,7 +19,7 @@ namespace MusicStore.E2ETests
       //  [InlineData("/")]
         //[InlineData("/Index")]
         //[InlineData("/About")]
-        [InlineData("/Privacy")]
+        [InlineData("/Home/Privacy")]
        // [InlineData("/Contact")]
         public async Task Get_EndpointsReturnsSuccessAndCorrectContentType(string url)
         {

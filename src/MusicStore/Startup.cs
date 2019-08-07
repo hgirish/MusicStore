@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MusicStore.Models;
@@ -23,9 +24,12 @@ namespace MusicStore
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureSiervices(IServiceCollection services)
+        public void ConfigureServices(IServiceCollection services)
         {
             services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
+            services.AddDbContext<MusicStoreContext>(options =>
+            options.UseInMemoryDatabase("Scratch"));
+
             services.Configure<CookiePolicyOptions>(options =>
             {
                 // This lambda determines whether user consent for non-essential cookies is needed for a given request.
