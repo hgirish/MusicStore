@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc.Testing;
+using AngleSharp;
+using AngleSharp.Html.Parser;
+using Microsoft.AspNetCore.Mvc.Testing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,7 +32,16 @@ namespace MusicStore.E2ETests.HomePage
 
             var content = await defaultPage.Content.ReadAsStringAsync();
 
-            Assert.Contains("Welcome", content);
+           Assert.Contains("<h4>Album title 6</h4>", content);
+            var config = Configuration.Default;
+
+            var context = BrowsingContext.New(config);
+            var parser = context.GetService<IHtmlParser>();
+            var document = parser.ParseDocument(content);
+         //  var document = await HtmlHelpers.GetDocumentAsync(defaultPage);
+           
+            var elements = document.QuerySelectorAll("li h4");
+            Assert.Equal(6, elements.Length);
 
         }
         

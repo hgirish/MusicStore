@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using MusicStore.Models;
 
@@ -34,7 +34,10 @@ namespace MusicStore.E2ETests
                  Artist = artists[n - 1],
                  ArtistId = n,
                  Genre = generes[n - 1],
-                 GenreId = n
+                 GenreId = n,
+                 Title = $"Album title {n}",
+                 AlbumId = n,
+                 AlbumArtUrl = $"album-art-url-{n}"
              }).ToArray();
             return albums;
         }
