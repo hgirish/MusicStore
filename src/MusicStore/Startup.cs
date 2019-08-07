@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -29,6 +30,13 @@ namespace MusicStore
             services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
             services.AddDbContext<MusicStoreContext>(options =>
             options.UseInMemoryDatabase("Scratch"));
+
+            services.AddIdentity<ApplicationUser, IdentityRole>()
+                .AddDefaultUI(Microsoft.AspNetCore.Identity.UI.UIFramework.Bootstrap4)
+                .AddEntityFrameworkStores<MusicStoreContext>()
+                .AddDefaultTokenProviders();
+
+            
 
             services.Configure<CookiePolicyOptions>(options =>
             {
@@ -58,7 +66,7 @@ namespace MusicStore
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
-
+            app.UseAuthentication();
             app.UseMvc(routes =>
             {
                 routes.MapRoute(

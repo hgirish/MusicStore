@@ -53,7 +53,7 @@ namespace MusicStore.Controllers
                 .Take(count)
                 .ToListAsync());
         }
-        [AllowAnonymous]
+     
         public IActionResult Privacy()
         {
             
